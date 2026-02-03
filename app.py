@@ -1,24 +1,30 @@
 import os
 import psycopg2
 from flask import Flask, render_template_string
+from datetime import datetime
 
 app = Flask(__name__)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <title>Lista de Pagamentos</title>
     <style>
-        table { border-collapse: collapse; width: 90%; margin: 20px auto; }
-        th, td { border: 1px solid #aaa; padding: 8px; text-align: center; }
-        th { background-color: #eee; }
+        body { font-family: Arial, sans-serif; background-color: #f9f9f9; }
+        h2 { text-align: center; margin-top: 20px; }
+        table { border-collapse: collapse; width: 95%; margin: 20px auto; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #4CAF50; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .approved { color: green; font-weight: bold; }
+        .pending { color: orange; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h2 style="text-align:center;">Pagamentos</h2>
+    <h2>Pagamentos</h2>
     <table>
         <thead>
             <tr>
@@ -35,9 +41,14 @@ HTML_TEMPLATE = """
         <tbody>
             {% for row in rows %}
             <tr>
-                {% for cell in row %}
-                <td>{{ cell }}</td>
-                {% endfor %}
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+                <td>{{ row[2] }}</td>
+                <td>{{ row[3] }}</td>
+                <td class="{{ row[4] }}">{{ row[4] }}</td>
+                <td>{{ row[5] | format_date }}</td>
+                <td>{{ row[6] | format_date }}</td>
+                <td>{{ row[7] }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -45,6 +56,8 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
+
+app.jinja_env.filters['format_date'] = lambda s: datetime.strptime(s, "%a, %d %b %Y %H:%M:%S %Z").strftime("%d/%m/%Y %H:%M")
 
 @app.route("/")
 def listar_pagamentos():
