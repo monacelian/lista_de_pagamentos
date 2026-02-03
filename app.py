@@ -1,7 +1,6 @@
 import os
 import psycopg2
 from flask import Flask, render_template_string
-from datetime import datetime
 
 app = Flask(__name__)
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -57,7 +56,8 @@ HTML_TEMPLATE = """
 </html>
 """
 
-app.jinja_env.filters['format_date'] = lambda s: datetime.strptime(s, "%a, %d %b %Y %H:%M:%S %Z").strftime("%d/%m/%Y %H:%M")
+# Novo filtro correto
+app.jinja_env.filters['format_date'] = lambda dt: dt.strftime("%d/%m/%Y %H:%M") if dt else ""
 
 @app.route("/")
 def listar_pagamentos():
