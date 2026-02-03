@@ -2,6 +2,7 @@ import os
 import psycopg2
 from flask import Flask
 
+
 app = Flask(__name__)
 
 # Pega a URL do banco da variável de ambiente
