@@ -1,6 +1,6 @@
 import os
 import psycopg2
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, request, redirect, url_for
 
 app = Flask(__name__)
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -20,6 +20,7 @@ HTML_TEMPLATE = """
         tr:nth-child(even) { background-color: #f2f2f2; }
         .approved { color: green; font-weight: bold; }
         .pending { color: orange; font-weight: bold; }
+        button { padding: 5px 10px; margin: 0; }
     </style>
 </head>
 <body>
@@ -35,6 +36,7 @@ HTML_TEMPLATE = """
                 <th>Created At</th>
                 <th>Updated At</th>
                 <th>Transaction ID</th>
+                <th>Ação</th>
             </tr>
         </thead>
         <tbody>
@@ -45,9 +47,19 @@ HTML_TEMPLATE = """
                 <td>{{ row[2] }}</td>
                 <td>{{ row[3] }}</td>
                 <td class="{{ row[4] }}">{{ row[4] }}</td>
-                <td>{{ row[5] | format_date }}</td>
-                <td>{{ row[6] | format_date }}</td>
+                <td>{{ row[5].strftime("%d/%m/%Y %H:%M") }}</td>
+                <td>{{ row[6].strftime("%d/%m/%Y %H:%M") }}</td>
                 <td>{{ row[7] }}</td>
+                <td>
+                    <form method="POST" action="/update_status">
+                        <input type="hidden" name="id" value="{{ row[0] }}">
+                        <select name="status">
+                            <option value="pending" {% if row[4]=='pending' %}selected{% endif %}>pending</option>
+                            <option value="approved" {% if row[4]=='approved' %}selected{% endif %}>approved</option>
+                        </select>
+                        <button type="submit">Salvar</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -55,9 +67,6 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
-
-# Novo filtro correto
-app.jinja_env.filters['format_date'] = lambda dt: dt.strftime("%d/%m/%Y %H:%M") if dt else ""
 
 @app.route("/")
 def listar_pagamentos():
@@ -69,6 +78,21 @@ def listar_pagamentos():
         cur.close()
         conn.close()
         return render_template_string(HTML_TEMPLATE, rows=rows)
+    except Exception as e:
+        return f"Erro: {str(e)}", 500
+
+@app.route("/update_status", methods=["POST"])
+def update_status():
+    pagamento_id = request.form.get("id")
+    status = request.form.get("status")
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
+        cur.execute("UPDATE pagamentos SET status=%s WHERE id=%s", (status, pagamento_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return redirect(url_for("listar_pagamentos"))
     except Exception as e:
         return f"Erro: {str(e)}", 500
 
