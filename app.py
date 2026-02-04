@@ -1,11 +1,11 @@
 import os
 
 import psycopg2
-from flask import Flask, render_template_string, request, redirect, url_for, session
+from flask import Flask, render_template_string, request, redirect, session, send_from_directory
 
 app = Flask(__name__)
 
-# chave de sessão (pode ser qualquer texto)
+# chave de sessão
 app.secret_key = os.environ.get("SECRET_KEY", "segredo123")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -19,6 +19,17 @@ LOGIN_HTML = """
 <html>
 <head>
     <title>Login</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#4CAF50">
+
+    <script>
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/static/sw.js");
+    }
+    </script>
+
     <style>
         body { font-family: Arial; background: #f2f2f2; }
         .box {
@@ -52,6 +63,17 @@ TABLE_HTML = """
 <html>
 <head>
     <title>Pagamentos</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#4CAF50">
+
+    <script>
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/static/sw.js");
+    }
+    </script>
+
     <style>
         body { font-family: Arial; background: #f9f9f9; }
         h2 { text-align: center; }
@@ -113,6 +135,17 @@ TABLE_HTML = """
 </body>
 </html>
 """
+
+
+# ---------- ROTAS PWA ----------
+@app.route("/manifest.json")
+def manifest():
+    return send_from_directory("static", "manifest.json")
+
+
+@app.route("/sw.js")
+def service_worker():
+    return send_from_directory("static", "sw.js")
 
 
 # ---------- LOGIN ----------
